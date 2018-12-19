@@ -13,6 +13,7 @@ class BackgroundTimer {
   constructor() {
     this.uniqueId = 0;
     this.callbacks = {};
+    this.stopped = true;
 
     Emitter.addListener('backgroundTimer.timeout', (id) => {
       if (this.callbacks[id]) {
@@ -45,21 +46,25 @@ class BackgroundTimer {
     this.start(0);
     this.backgroundListener = EventEmitter.addListener('backgroundTimer', () => {
       this.backgroundListener.remove();
+      this.stopped = false;
       this.backgroundClockMethod(callback, delay);
     });
   }
 
   backgroundClockMethod(callback, delay) {
-    this.backgroundTimer = this.setTimeout(() => {
-      callback();
-      this.backgroundClockMethod(callback, delay);
-    },
-    delay);
+    if (!this.stopped) {
+      this.backgroundTimer = this.setTimeout(() => {
+        callback();
+        this.backgroundClockMethod(callback, delay);
+      },
+      delay);
+    }
   }
 
   stopBackgroundTimer() {
     this.stop();
     this.clearTimeout(this.backgroundTimer);
+    this.stopped = true;
   }
 
   // New API, allowing for multiple timers
